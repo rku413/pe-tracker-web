@@ -1,6 +1,57 @@
 # 追蹤清單：一行一個股票代碼，# 開頭是註解，空行會被忽略。
-# 台股請加 .TW，例如 2330.TW；港股加 .HK，例如 0700.HK
+# 台股請加 .TW，例如 2330.TW；港股加 .HK；韓股加 .KS
+
+# --- 原本的 4 檔 ---
 NVDA
 AAPL
 RKLB
 AVGO
+
+# --- 半導體 / 硬體 ---
+2330.TW
+TSM
+ASML
+000660.KS
+AMD
+INTC
+MU
+SNDK
+MRVL
+COHR
+LITE
+DELL
+VRT
+BE
+
+# --- 軟體 / 網路 ---
+MSFT
+AMZN
+GOOG
+META
+CRM
+ADBE
+ORCL
+NOW
+PLTR
+APP
+PANW
+CRWD
+NBIS
+CRWV
+NFLX
+SPOT
+UBER
+TSLA
+SPCX
+
+# --- 其他 ---
+ISRG
+TRV
+
+# --- ETF ---
+QQQ
+SOXX
+SPY
+IGV
+XLV
+XLI

@@ -68,13 +68,19 @@ def fetch_basic(symbol: str) -> dict[str, Any]:
     if price is None:
         price = float(closes.iloc[-1])
 
+    # ETF 沒有 trailingEps，但 Yahoo 有基金層級的 trailingPE，反推一個等效 EPS 讓 PE 序列可算
+    eps = _num(info.get("trailingEps"))
+    trailing_pe = _num(info.get("trailingPE"))
+    if eps is None and trailing_pe is not None and trailing_pe > 0:
+        eps = price / trailing_pe
+
     return {
         "symbol": symbol,
         "name": info.get("shortName") or info.get("longName") or symbol,
         "currency": info.get("currency") or "",
         "price": price,
         "closes": closes,
-        "eps": _num(info.get("trailingEps")),
+        "eps": eps,
         "forward_pe": _num(info.get("forwardPE")),
         "pb": _num(info.get("priceToBook")),
         "operating_cashflow": _num(info.get("operatingCashflow")),
