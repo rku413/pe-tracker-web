@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PE Tracker</title>
+<style>
+  :root {
+    --bg: #f7f8fa; --card: #ffffff; --text: #1f2328; --muted: #656d76; --border: #d0d7de;
+    --link: #0969da; --head: #f0f2f5; --hover: #f3f6fa;
+    --high2: #cf222e; --high1: #e8853a; --low1: #2da44e; --low2: #1a7f37; --na: #8c959f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117; --card: #161b22; --text: #e6edf3; --muted: #8b949e; --border: #30363d;
+      --link: #58a6ff; --head: #1c2129; --hover: #1f262e;
+      --high2: #ff7b72; --high1: #f0a35e; --low1: #56d364; --low2: #3fb950; --na: #6e7681;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.5 -apple-system, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif; }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 16px; }
+  header { margin-bottom: 12px; }
+  header h1 { font-size: 22px; margin: 0 0 6px; }
+  .meta { color: var(--muted); font-size: 13px; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+  .edit-link { display: inline-block; margin: 10px 0 4px; padding: 6px 12px; border: 1px solid var(--border);
+               border-radius: 6px; background: var(--card); font-size: 13px; }
+  .edit-link:hover { background: var(--hover); text-decoration: none; }
+  .legend { font-size: 12px; color: var(--muted); margin: 8px 0 16px; }
+  section.group { background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+                  margin-bottom: 16px; overflow: hidden; }
+  section.group h2 { font-size: 15px; margin: 0; padding: 10px 14px; border-bottom: 1px solid var(--border);
+                     display: flex; align-items: center; gap: 8px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .g-high2 .dot { background: var(--high2); } .g-high1 .dot { background: var(--high1); }
+  .g-low1 .dot { background: var(--low1); }   .g-low2 .dot { background: var(--low2); }
+  .g-na .dot { background: var(--na); }
+  .count { color: var(--muted); font-weight: normal; font-size: 13px; }
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { border-collapse: collapse; width: 100%; min-width: 1500px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 7px 10px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
+  th { background: var(--head); font-weight: 600; font-size: 12px; color: var(--muted); position: sticky; top: 0; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--hover); }
+  td.sym, th:first-child { text-align: left; position: sticky; left: 0; background: var(--card);
+                           font-weight: 600; z-index: 1; }
+  th:first-child { background: var(--head); z-index: 2; }
+  tbody tr:hover td.sym { background: var(--hover); }
+  td.name { text-align: left; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+  td.na { color: var(--na); }
+  td.empty { text-align: center; color: var(--muted); padding: 14px; }
+  section.failures { border: 1px solid var(--high2); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; }
+  section.failures h2 { font-size: 14px; margin: 0 0 6px; color: var(--high2); }
+  section.failures ul { margin: 0; padding-left: 20px; font-size: 13px; }
+  footer { color: var(--muted); font-size: 12px; margin-top: 20px; line-height: 1.7; }
+  @media (max-width: 600px) {
+    .wrap { padding: 10px; }
+    header h1 { font-size: 19px; }
+    th, td { padding: 6px 8px; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>PE Tracker 估值追蹤</h1>
+  <div class="meta">
+    <span>更新時間：<strong>2026-09-02 23:57</strong>（台灣時間）</span>
+    <span>追蹤 4 檔，成功 4 檔</span>
+  </div>
+  <a class="edit-link" href="https://github.com/rku413/pe-tracker-web/blob/main/tickers.txt" target="_blank" rel="noopener">✏️ 編輯追蹤清單（tickers.txt on GitHub）</a>
+  <div class="legend">
+    分組依據：目前 PE 相對近 90 個交易日 PE 均值的偏離（以標準差 σ 為單位），
+    ±1σ 以外為「顯著」。低估價 / 合理價 / 高估價 = (均值 ∓ 1σ) × EPS。
+    IV Rank = (今日 IV − 近 252 個交易日最低 IV) ÷ (最高 IV − 最低 IV)，0% 為一年最低、100% 為一年最高；
+    IV 取最接近平價、到期最接近 30 天的 call，由本站每日累積；標「種子」代表區間含手動填入的 52 週高低點（iv_seeds.json），
+    純累積且不足 252 天時標註實際天數。
+  </div>
+</header>
+
+
+<section class="group g-high2">
+  <h2><span class="dot"></span>顯著高估 <span class="count">2 檔</span></h2>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>代碼</th><th>名稱</th><th>股價</th><th>PE</th><th>PE均值</th><th>PE中位數</th><th>PE標準差</th><th>偏離(σ)</th><th>低估價</th><th>合理價</th><th>高估價</th><th>Forward PE</th><th>PB</th><th>PCF</th><th>PEG</th><th>殖利率</th><th>EV/EBITDA</th><th>52週低</th><th>52週高</th><th>52週位置</th><th>IV Rank</th></tr></thead>
+      <tbody><tr><td class="sym"><a href="https://finance.yahoo.com/quote/NVDA" target="_blank" rel="noopener">NVDA</a></td><td class="name">NVIDIA Corporation</td><td>227.38</td><td>28.74</td><td>26.65</td><td>26.72</td><td>1.26</td><td>+1.66</td><td>200.83</td><td>210.80</td><td>220.77</td><td>14.76</td><td>28.18</td><td>40.86</td><td>0.56</td><td>0.46%</td><td>25.92</td><td>164.07</td><td>236.54</td><td>87%</td><td class="">0% (種子)</td></tr><tr><td class="sym"><a href="https://finance.yahoo.com/quote/AAPL" target="_blank" rel="noopener">AAPL</a></td><td class="name">Apple Inc.</td><td>324.55</td><td>37.26</td><td>35.09</td><td>35.40</td><td>1.84</td><td>+1.18</td><td>289.59</td><td>305.66</td><td>321.73</td><td>34.02</td><td>44.09</td><td>32.28</td><td>2.54</td><td>0.33%</td><td>28.38</td><td>225.95</td><td>344.57</td><td>83%</td><td class="">65% (種子)</td></tr></tbody>
+    </table>
+  </div>
+</section>
+<section class="group g-high1">
+  <h2><span class="dot"></span>高估~均值 <span class="count">0 檔</span></h2>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>代碼</th><th>名稱</th><th>股價</th><th>PE</th><th>PE均值</th><th>PE中位數</th><th>PE標準差</th><th>偏離(σ)</th><th>低估價</th><th>合理價</th><th>高估價</th><th>Forward PE</th><th>PB</th><th>PCF</th><th>PEG</th><th>殖利率</th><th>EV/EBITDA</th><th>52週低</th><th>52週高</th><th>52週位置</th><th>IV Rank</th></tr></thead>
+      <tbody><tr><td colspan="21" class="empty">此分組目前沒有股票</td></tr></tbody>
+    </table>
+  </div>
+</section>
+<section class="group g-low1">
+  <h2><span class="dot"></span>均值~低估 <span class="count">0 檔</span></h2>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>代碼</th><th>名稱</th><th>股價</th><th>PE</th><th>PE均值</th><th>PE中位數</th><th>PE標準差</th><th>偏離(σ)</th><th>低估價</th><th>合理價</th><th>高估價</th><th>Forward PE</th><th>PB</th><th>PCF</th><th>PEG</th><th>殖利率</th><th>EV/EBITDA</th><th>52週低</th><th>52週高</th><th>52週位置</th><th>IV Rank</th></tr></thead>
+      <tbody><tr><td colspan="21" class="empty">此分組目前沒有股票</td></tr></tbody>
+    </table>
+  </div>
+</section>
+<section class="group g-low2">
+  <h2><span class="dot"></span>顯著低估 <span class="count">1 檔</span></h2>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>代碼</th><th>名稱</th><th>股價</th><th>PE</th><th>PE均值</th><th>PE中位數</th><th>PE標準差</th><th>偏離(σ)</th><th>低估價</th><th>合理價</th><th>高估價</th><th>Forward PE</th><th>PB</th><th>PCF</th><th>PEG</th><th>殖利率</th><th>EV/EBITDA</th><th>52週低</th><th>52週高</th><th>52週位置</th><th>IV Rank</th></tr></thead>
+      <tbody><tr><td class="sym"><a href="https://finance.yahoo.com/quote/AVGO" target="_blank" rel="noopener">AVGO</a></td><td class="name">Broadcom Inc.</td><td>369.89</td><td>61.34</td><td>66.02</td><td>65.12</td><td>4.37</td><td>-1.07</td><td>371.80</td><td>398.13</td><td>424.46</td><td>18.90</td><td>20.07</td><td>52.34</td><td>0.42</td><td>0.70%</td><td>42.87</td><td>289.96</td><td>495.00</td><td>39%</td><td class="">50% (種子)</td></tr></tbody>
+    </table>
+  </div>
+</section>
+<section class="group g-na">
+  <h2><span class="dot"></span>無法判讀 <span class="count">1 檔</span></h2>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>代碼</th><th>名稱</th><th>股價</th><th>PE</th><th>PE均值</th><th>PE中位數</th><th>PE標準差</th><th>偏離(σ)</th><th>低估價</th><th>合理價</th><th>高估價</th><th>Forward PE</th><th>PB</th><th>PCF</th><th>PEG</th><th>殖利率</th><th>EV/EBITDA</th><th>52週低</th><th>52週高</th><th>52週位置</th><th>IV Rank</th></tr></thead>
+      <tbody><tr><td class="sym"><a href="https://finance.yahoo.com/quote/RKLB" target="_blank" rel="noopener">RKLB</a></td><td class="name">Rocket Lab Corporation</td><td>62.16</td><td class="na">N/A</td><td class="na">N/A</td><td class="na">N/A</td><td class="na">N/A</td><td class="na">N/A</td><td class="na">N/A</td><td class="na">N/A</td><td class="na">N/A</td><td>1,364.35</td><td>10.65</td><td class="na">N/A</td><td class="na">N/A</td><td class="na">無股息</td><td>-234.20</td><td>37.57</td><td>151.00</td><td>22%</td><td class="">4% (種子)</td></tr></tbody>
+    </table>
+  </div>
+</section>
+<footer>
+  資料來源：Yahoo Finance（透過 yfinance），每日由 GitHub Actions 自動更新。僅供參考，不構成投資建議。<br>
+  原始碼與歷史資料：<a href="https://github.com/rku413/pe-tracker-web" target="_blank" rel="noopener">https://github.com/rku413/pe-tracker-web</a>
+</footer>
+</div>
+</body>
+</html>

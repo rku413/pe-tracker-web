@@ -1,0 +1,9 @@
+{
+  "_comment": "IV Rank 種子：手動填入各股票 52 週 IV 最高/最低值與發生日期，讓 IVR 不必等一年累積。數值用百分比（54.93 代表 54.93%）。日期超過 365 天的種子會自動失效，之後改用 history.csv 累積的資料。沒列在這裡的股票照舊靠累積。",
+  "_source": "Barchart.com > Options Overview History > 52-Week Implied Volatility",
+  "_as_of": "2026-09-02",
+  "NVDA": {"high": 54.93, "high_date": "2025-11-18", "low": 31.82, "low_date": "2026-08-31"},
+  "AAPL": {"high": 32.49, "high_date": "2026-03-27", "low": 17.33, "low_date": "2025-12-24"},
+  "RKLB": {"high": 115.64, "high_date": "2025-10-10", "low": 65.35, "low_date": "2026-09-02"},
+  "AVGO": {"high": 64.55, "high_date": "2025-11-20", "low": 35.80, "low_date": "2025-09-08"}
+}

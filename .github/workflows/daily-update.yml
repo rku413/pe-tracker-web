@@ -1,0 +1,53 @@
+name: Daily PE update
+
+on:
+  schedule:
+    # 台灣時間每天 05:30 = UTC 21:30（前一日）。台灣無夏令時間，全年固定。
+    - cron: "30 21 * * *"
+  workflow_dispatch: {}   # 允許在 Actions 分頁手動按 Run workflow
+
+permissions:
+  contents: write         # 讓 github-actions bot 能把結果 commit 回 repo
+
+concurrency:
+  group: daily-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout（每次都抓 main 分支最新版，tickers.txt 一定是最新內容）
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip        # 只快取 pip 套件，不影響程式碼與 tickers.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Fetch data and build index.html
+        run: python main.py
+
+      - name: Commit and push results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html data/history.csv
+          if git diff --cached --quiet; then
+            echo "沒有變更，不需要 commit。"
+            exit 0
+          fi
+          git commit -m "chore: daily update $(TZ=Asia/Taipei date '+%Y-%m-%d %H:%M') [skip ci]"
+          # 若你剛好同時在網頁上改了 tickers.txt，先把遠端變更 rebase 進來再 push
+          git pull --rebase --autostash origin ${{ github.ref_name }}
+          git push origin HEAD:${{ github.ref_name }}
